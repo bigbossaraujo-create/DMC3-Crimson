@@ -1187,9 +1187,19 @@ HRESULT GetDeviceStateA(IDirectInputDevice8A* pDevice, DWORD BufferSize, LPVOID 
         }
     }
 
-    // Blocks DI8 Keyboard Input while GUI is Open or ImGui wants keyboard input
-    if (g_show || ImGui::GetIO().WantCaptureKeyboard || GetForegroundWindow() != appWindow) {
+    // Blocks DI8 Keyboard Input while GUI is Open or ImGui wants keyboard input.
+    const bool blockGameInput = g_show || ImGui::GetIO().WantCaptureKeyboard || GetForegroundWindow() != appWindow;
+    if (blockGameInput) {
         SetMemory(Buffer, 0, BufferSize);
+    } else if (BufferSize == 256 && Buffer && result == S_OK) {
+        // Native mouse buttons are exposed as reserved scan codes so the game's existing
+        // keyboard binding table can process them without a separate fake UI-only mapping.
+        // 0xF0..0xF4 = left, right, middle, X1, X2.
+        BYTE* keys = static_cast<BYTE*>(Buffer);
+        for (uint32 i = 0; i < 5; ++i) {
+            const uint32 syntheticCode = 0xF0 + i;
+            keys[syntheticCode] = (mouse.state.rgbButtons[i] & 0x80) ? 0x80 : 0;
+        }
     }
 
     return result;
