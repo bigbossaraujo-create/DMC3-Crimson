@@ -779,17 +779,18 @@ void ShowButtonConfigWindow() {
 			}
             ImGui::SameLine();
             if (GUI_Button("Apply DMC5 Mouse Preset")) {
-                // Keep movement defaults, but use mouse-first combat controls.
-                activeKeybinds[1]  = DI8::KEY::V;          // Devil Trigger
-                activeKeybinds[8]  = DI8::KEY::Q;          // Lock-on
+                // DMC5-style keyboard/mouse combat layout.
+                activeKeybinds[0]  = DI8::KEY::R;           // Taunt
+                activeKeybinds[1]  = DI8::KEY::F;           // Devil Trigger
+                activeKeybinds[8]  = DI8::KEY::LEFT_SHIFT; // Lock-on
                 activeKeybinds[10] = 0xF0;                 // Melee: left mouse
-                activeKeybinds[11] = DI8::KEY::LEFT_SHIFT; // Style action
+                activeKeybinds[11] = 0xF2;                 // Style action: middle mouse
                 activeKeybinds[12] = DI8::KEY::SPACE;      // Jump
                 activeKeybinds[13] = 0xF1;                 // Shoot: right mouse
-                activeKeybinds[22] = DI8::KEY::ONE;        // Change gun
-                activeKeybinds[23] = DI8::KEY::TWO;        // Change melee weapon
+                activeKeybinds[22] = DI8::KEY::Q;           // Change gun
+                activeKeybinds[23] = DI8::KEY::E;           // Change Devil Arm
 
-                // Avoid collisions with the preset's V/1/2 bindings.
+                // Direct weapon slots can conflict with the preset's Q/E bindings.
                 memset(dwActiveKeybinds, 0, sizeof(uint32) * NUM_DIRECT_WEAPON_BINDS);
                 memset(dwQueuedKeybinds, 0, sizeof(uint32) * NUM_DIRECT_WEAPON_BINDS);
                 memcpy(queuedKeybinds, activeKeybinds, sizeof(uint32) * NUM_KEYBINDS);
