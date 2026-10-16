@@ -10,7 +10,8 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    # The project targets Visual Studio 2022; windows-latest no longer ships it.
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
