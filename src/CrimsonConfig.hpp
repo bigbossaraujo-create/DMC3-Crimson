@@ -257,6 +257,7 @@ struct CrimsonConfig {
 		bool multiplayerCamera = true;
 		bool panoramicCam = true;
 		bool thirdPersonCamera = true;
+		bool forceThirdPersonEverywhere = false;
 		bool mouseCamera = false;
 		float mouseCameraSensitivity = 1.0f;
 		float mouseCameraSensitivityY = 1.0f;
@@ -279,6 +280,7 @@ struct CrimsonConfig {
 				std::make_pair("multiplayerCamera", &Camera::multiplayerCamera),
 				std::make_pair("panoramicCam", &Camera::panoramicCam),
                 std::make_pair("thirdPersonCamera", &Camera::thirdPersonCamera),
+				std::make_pair("forceThirdPersonEverywhere", &Camera::forceThirdPersonEverywhere),
 				std::make_pair("mouseCamera", &Camera::mouseCamera),
 				std::make_pair("mouseCameraSensitivity", &Camera::mouseCameraSensitivity),
 				std::make_pair("mouseCameraSensitivityY", &Camera::mouseCameraSensitivityY),
