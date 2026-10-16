@@ -38,6 +38,12 @@ namespace CrimsonCameraController {
 	/// <returns>true if we should ignore forced TPS cam at time of function call</returns>
 	bool CheckInternalException() {
 
+		// Optional override for players who want the free camera in every room.
+		// This bypasses room-specific camera exceptions; scripted game camera calls may still occur.
+		if (activeCrimsonConfig.Camera.forceThirdPersonEverywhere) {
+			return false;
+		}
+
 		//get event & nextevent
 		auto pool_10298 = *reinterpret_cast<byte8***>(appBaseAddr + 0xC90E10);
 		if (!pool_10298 || !pool_10298[8]) {
