@@ -62,6 +62,20 @@ jobs:
         shell: pwsh
         run: |
           $s = $env:GITHUB_STEP_SUMMARY
+          # Annotations are readable on the run page and through the API even without opening the raw logs.
+          function Annot($title, $lines) {
+            $text = ($lines -join "`n")
+            if ($text.Length -gt 3500) { $text = $text.Substring($text.Length - 3500) }
+            $text = $text.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=$title::$text"
+          }
+          foreach ($f in 'configure.log', 'build.log') {
+            if (Test-Path $f) {
+              Annot "$f tail" (Get-Content $f -Tail 40)
+              $e = Select-String -Path $f -Pattern 'error' | Select-Object -First 15 | ForEach-Object { $_.Line }
+              if ($e) { Annot "$f errors" $e }
+            }
+          }
           foreach ($f in 'configure.log', 'build.log') {
             if (Test-Path $f) {
               "## $f - last 60 lines" | Out-File $s -Append -Encoding utf8
