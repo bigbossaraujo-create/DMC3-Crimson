@@ -1483,13 +1483,14 @@ static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& ma
 
 	// ---- Tunables (radians per mouse count at sensitivity 1.0) ----
 	// If the camera turns the wrong way horizontally, flip MOUSE_YAW_SIGN to -1.0f.
-	constexpr float MOUSE_YAW_SIGN = 1.0f;
-	constexpr float YAW_RAD_PER_COUNT = 0.0035f;
-	constexpr float TILT_PER_COUNT = 0.0006f;
+	constexpr float MOUSE_YAW_SIGN = -1.0f;
+	constexpr float YAW_RAD_PER_COUNT = 0.01f;
+	constexpr float TILT_PER_COUNT = 0.004f;
 	constexpr float TILT_MIN = 0.0f;
 	constexpr float TILT_MAX = 0.6f;
 
 	const float sens = (cfg.mouseCameraSensitivity > 0.0f) ? cfg.mouseCameraSensitivity : 0.0f;
+	const float sensY = (cfg.mouseCameraSensitivityY > 0.0f) ? cfg.mouseCameraSensitivityY : 0.0f;
 
 	// ---- Yaw: rotate the camera position around the player on the ground plane ----
 	const float yaw = rawX * YAW_RAD_PER_COUNT * sens * MOUSE_YAW_SIGN;
@@ -1509,7 +1510,7 @@ static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& ma
 	// ---- Pitch: vanilla keeps the vertical angle in cameraData->tilt ----
 	// Higher tilt = camera higher (the "Closer to Ground" preset is the lower value), so moving the mouse up
 	// (negative rawY) lowers the tilt, like a normal "look up" in an orbit camera.
-	const float tiltDelta = rawY * TILT_PER_COUNT * sens * (cfg.mouseCameraInvertY ? -1.0f : 1.0f);
+	const float tiltDelta = rawY * TILT_PER_COUNT * sensY * (cfg.mouseCameraInvertY ? -1.0f : 1.0f);
 	if (tiltDelta != 0.0f) {
 		cameraData->tilt = std::clamp(cameraData->tilt + tiltDelta, TILT_MIN, TILT_MAX);
 	}

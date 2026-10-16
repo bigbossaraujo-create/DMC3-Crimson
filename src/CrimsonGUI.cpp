@@ -5353,13 +5353,22 @@ void CameraSection(size_t defaultFontSize) {
 			ImGui::TableNextColumn();
 
 			ImGui::PushItemWidth(itemWidth * 0.7f);
-			GUI_InputDefault2("Mouse Sensitivity", activeCrimsonConfig.Camera.mouseCameraSensitivity, queuedCrimsonConfig.Camera.mouseCameraSensitivity,
+			GUI_InputDefault2("Mouse Sens. Horizontal", activeCrimsonConfig.Camera.mouseCameraSensitivity, queuedCrimsonConfig.Camera.mouseCameraSensitivity,
 				defaultCrimsonConfig.Camera.mouseCameraSensitivity, 0.1f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
 			ImGui::PopItemWidth();
 
 			ImGui::TableNextColumn();
 
 			GUI_Checkbox2("Invert Mouse Y", activeCrimsonConfig.Camera.mouseCameraInvertY, queuedCrimsonConfig.Camera.mouseCameraInvertY);
+
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			ImGui::PushItemWidth(itemWidth * 0.7f);
+			GUI_InputDefault2("Mouse Sens. Vertical", activeCrimsonConfig.Camera.mouseCameraSensitivityY, queuedCrimsonConfig.Camera.mouseCameraSensitivityY,
+				defaultCrimsonConfig.Camera.mouseCameraSensitivityY, 0.1f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
+			ImGui::PopItemWidth();
 
 			ImGui::EndTable();
 		}

@@ -259,6 +259,7 @@ struct CrimsonConfig {
 		bool thirdPersonCamera = true;
 		bool mouseCamera = false;
 		float mouseCameraSensitivity = 1.0f;
+		float mouseCameraSensitivityY = 1.0f;
 		bool mouseCameraInvertY = false;
 
 		static constexpr auto Metadata() {
@@ -280,6 +281,7 @@ struct CrimsonConfig {
                 std::make_pair("thirdPersonCamera", &Camera::thirdPersonCamera),
 				std::make_pair("mouseCamera", &Camera::mouseCamera),
 				std::make_pair("mouseCameraSensitivity", &Camera::mouseCameraSensitivity),
+				std::make_pair("mouseCameraSensitivityY", &Camera::mouseCameraSensitivityY),
 				std::make_pair("mouseCameraInvertY", &Camera::mouseCameraInvertY)
 			);
 		}
