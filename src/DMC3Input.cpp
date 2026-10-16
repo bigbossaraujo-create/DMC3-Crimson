@@ -19,6 +19,19 @@
 
 #define NUM_BINDS_WITHOUT_START 15
 
+// Reserved DirectInput scan-code slots used to represent native mouse buttons.
+// Hook::DI8::GetDeviceStateA synthesizes these codes while the mapped button is held.
+static const char* GetKeyboardBindName(uint32 key) {
+    switch (key) {
+    case 0xF0: return "MOUSE 1";
+    case 0xF1: return "MOUSE 2";
+    case 0xF2: return "MOUSE 3";
+    case 0xF3: return "MOUSE 4";
+    case 0xF4: return "MOUSE 5";
+    default: return (key > 0 && key < 256) ? DI8::keyNames[key] : "UNBOUND";
+    }
+}
+
 // NOTE(): writing bind table at that particular place seems to work fine for me... idk, needs testing?
 static std::unique_ptr<Utility::Detour_t> s_ButtonToActionHook;
 // NOTE(): to show custom imgoo menu when opening settings, idk if there is a better way tbqh
@@ -681,7 +694,7 @@ void ShowButtonConfigWindow() {
                         ImGui::PushID(i);
                         ImGui::Text(s_keybindActionNames[i]);
                         ImGui::SameLine(kbRowLabelX);
-                        const char* keyName = (activeKeybinds[i] > 0 && activeKeybinds[i] < 256) ? DI8::keyNames[activeKeybinds[i]] : "UNBOUND";
+                        const char* keyName = GetKeyboardBindName(activeKeybinds[i]);
                         if (GUI_Button(keyName, ImVec2(kbButtonW, 0))) {
                             s_kbCapture.open       = true;
                             s_kbCapture.index      = i;
@@ -713,7 +726,7 @@ void ShowButtonConfigWindow() {
                         ImGui::PushID(1000 + i);
                         ImGui::Text(s_directWeaponActionNames[i]);
                         ImGui::SameLine(kbRowLabelX);
-                        const char* keyName = (dwActiveKeybinds[i] > 0 && dwActiveKeybinds[i] < 256) ? DI8::keyNames[dwActiveKeybinds[i]] : "UNBOUND";
+                        const char* keyName = GetKeyboardBindName(dwActiveKeybinds[i]);
                         if (GUI_Button(keyName, ImVec2(kbButtonW, 0))) {
                             s_kbCapture.open          = true;
                             s_kbCapture.index         = i;
@@ -764,6 +777,30 @@ void ShowButtonConfigWindow() {
 				protectionHelper.Pop();
 				GUI::save = true;
 			}
+            ImGui::SameLine();
+            if (GUI_Button("Apply DMC5 Mouse Preset")) {
+                // Keep movement defaults, but use mouse-first combat controls.
+                activeKeybinds[1]  = DI8::KEY::V;          // Devil Trigger
+                activeKeybinds[8]  = DI8::KEY::Q;          // Lock-on
+                activeKeybinds[10] = 0xF0;                 // Melee: left mouse
+                activeKeybinds[11] = DI8::KEY::LEFT_SHIFT; // Style action
+                activeKeybinds[12] = DI8::KEY::SPACE;      // Jump
+                activeKeybinds[13] = 0xF1;                 // Shoot: right mouse
+                activeKeybinds[22] = DI8::KEY::ONE;        // Change gun
+                activeKeybinds[23] = DI8::KEY::TWO;        // Change melee weapon
+
+                // Avoid collisions with the preset's V/1/2 bindings.
+                memset(dwActiveKeybinds, 0, sizeof(uint32) * NUM_DIRECT_WEAPON_BINDS);
+                memset(dwQueuedKeybinds, 0, sizeof(uint32) * NUM_DIRECT_WEAPON_BINDS);
+                memcpy(queuedKeybinds, activeKeybinds, sizeof(uint32) * NUM_KEYBINDS);
+                byte8* baseAddr = appBaseAddr + 0x5611A0;
+                protectionHelper.Push(baseAddr, NUM_KEYBINDS * 4);
+                for (int i = 0; i < NUM_KEYBINDS; i++) {
+                    *(uint32_t*)(baseAddr + (i * 4)) = activeKeybinds[i];
+                }
+                protectionHelper.Pop();
+                GUI::save = true;
+            }
 		}
 	}
 	ImGui::End();
@@ -806,7 +843,7 @@ void ShowButtonConfigWindow() {
 			ImGui::Text("");
 			ImGui::Text("");
 
-			const char* previewName = (s_kbCapture.previewKey < 256) ? DI8::keyNames[s_kbCapture.previewKey] : "---";
+			const char* previewName = GetKeyboardBindName(s_kbCapture.previewKey);
 			ImGui::PushFont(UI::g_ImGuiFont_RussoOne[kbFontSize * 1.3f]);
 			CenterText(previewName);
 			ImGui::PopFont();
@@ -819,7 +856,7 @@ void ShowButtonConfigWindow() {
 			ImGui::Text("");
 			ImGui::Text("");
 
-			CenterText("Press a key, then ENTER to confirm or ESCAPE to cancel.");
+			CenterText("Press a key or mouse button, then ENTER to confirm or ESCAPE to cancel.");
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();
@@ -1008,6 +1045,24 @@ void UpdateKeyboardConfigCapture(byte8* state) {
         }
     } else {
         exec[DI8::KEY::ENTER] = true;
+    }
+
+    // Mouse buttons are represented by reserved scan codes 0xF0-0xF4.
+    // The actual game input hook turns these codes into held keyboard states.
+    const uint32 mouseCodes[] = { 0xF0, 0xF1, 0xF2, 0xF3, 0xF4 };
+    for (int i = 0; i < 5; ++i) {
+        const uint32 code = mouseCodes[i];
+        const bool down = (mouse.state.rgbButtons[i] & 0x80) != 0;
+        if (down) {
+            if (exec[code]) {
+                exec[code] = false;
+                preview = code;
+                s_kbCapture.hasConflict = false;
+                s_kbCapture.conflictText[0] = '\\0';
+            }
+        } else {
+            exec[code] = true;
+        }
     }
 
     // Any other key = preview
