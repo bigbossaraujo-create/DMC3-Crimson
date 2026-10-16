@@ -5342,6 +5342,25 @@ void CameraSection(size_t defaultFontSize) {
 				Camera::ToggleDisableBossCamera(activeCrimsonConfig.Camera.disableBossCamera);
 			}
 
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Mouse Camera", activeCrimsonConfig.Camera.mouseCamera, queuedCrimsonConfig.Camera.mouseCamera);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Rotates the Third Person Camera with raw mouse movement (not emulated as a stick).\n"
+				"Works on top of the right stick. Only active in-game with the menu closed.");
+
+			ImGui::TableNextColumn();
+
+			ImGui::PushItemWidth(itemWidth * 0.7f);
+			GUI_InputDefault2("Mouse Sensitivity", activeCrimsonConfig.Camera.mouseCameraSensitivity, queuedCrimsonConfig.Camera.mouseCameraSensitivity,
+				defaultCrimsonConfig.Camera.mouseCameraSensitivity, 0.1f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
+			ImGui::PopItemWidth();
+
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Invert Mouse Y", activeCrimsonConfig.Camera.mouseCameraInvertY, queuedCrimsonConfig.Camera.mouseCameraInvertY);
+
 			ImGui::EndTable();
 		}
 

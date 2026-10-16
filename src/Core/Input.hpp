@@ -29,6 +29,12 @@ struct Keyboard : InputDevice {
 struct Mouse : InputDevice {
     DIMOUSESTATE2 state;
 
+    // Raw relative movement (DirectInput lX/lY) summed across every Update() call.
+    // The reader (e.g. the mouse camera) takes the total and resets it to 0, so no motion is
+    // lost if Update() runs more often than the reader does.
+    long accumX = 0;
+    long accumY = 0;
+
     bool Create();
 
     void Update();

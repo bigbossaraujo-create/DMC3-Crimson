@@ -127,7 +127,14 @@ bool Mouse::Create() {
 }
 
 void Mouse::Update() {
+    // lX/lY are per-poll deltas. Clear them first so a failed read can't replay old motion.
+    state.lX = 0;
+    state.lY = 0;
+
     InputDevice::Update(sizeof(state), &state);
+
+    accumX += state.lX;
+    accumY += state.lY;
 }
 
 bool Gamepad::Create() {

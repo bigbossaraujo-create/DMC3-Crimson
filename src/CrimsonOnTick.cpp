@@ -1441,8 +1441,93 @@ void ResetCameraToNearestSide(EventData& eventData, PlayerActorData& mainActorDa
     }
 }
 
+/// <summary>
+/// Mouse Camera: orbits the third person camera around the player using the raw relative mouse
+/// movement from the DirectInput mouse (mouse.accumX / mouse.accumY). It is NOT converted into a
+/// fake right stick, so there is no deadzone, curve or stick-speed cap. It runs on top of the
+/// vanilla right stick rotation, so both keep working.
+/// </summary>
+/// <returns>true if the mouse is driving the camera this tick</returns>
+static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& mainActorData, CameraData* cameraData, CameraControlMetadata& cameraControlMetadata) {
+	auto& cfg = activeCrimsonConfig.Camera;
+
+	// Always consume the accumulated motion, even when inactive, so movement made while the
+	// menu is open (or the option is off) isn't applied later as one big jump.
+	const float rawX = static_cast<float>(mouse.accumX);
+	const float rawY = static_cast<float>(mouse.accumY);
+	mouse.accumX = 0;
+	mouse.accumY = 0;
+
+	if (!cfg.mouseCamera || !cameraData) {
+		return false;
+	}
+	if (eventData.event != EVENT::MAIN || g_inGameCutscene || g_show) {
+		return false;
+	}
+	if (GetForegroundWindow() != appWindow) {
+		return false;
+	}
+	// A fixed camera is currently active, or the camera is transitioning to / on the lock-on cam.
+	if (cameraControlMetadata.fixedCameraAddr != 0 || cameraData->transitionToLockOnCam != 0) {
+		return false;
+	}
+
+	// Keep the OS cursor parked in the middle of the window so it can't leave the game window
+	// or click something else. DirectInput's relative deltas are unaffected by this.
+	RECT rc;
+	if (GetClientRect(appWindow, &rc)) {
+		POINT center = { (rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2 };
+		ClientToScreen(appWindow, &center);
+		SetCursorPos(center.x, center.y);
+	}
+
+	// ---- Tunables (radians per mouse count at sensitivity 1.0) ----
+	// If the camera turns the wrong way horizontally, flip MOUSE_YAW_SIGN to -1.0f.
+	constexpr float MOUSE_YAW_SIGN = 1.0f;
+	constexpr float YAW_RAD_PER_COUNT = 0.0035f;
+	constexpr float TILT_PER_COUNT = 0.0006f;
+	constexpr float TILT_MIN = 0.0f;
+	constexpr float TILT_MAX = 0.6f;
+
+	const float sens = (cfg.mouseCameraSensitivity > 0.0f) ? cfg.mouseCameraSensitivity : 0.0f;
+
+	// ---- Yaw: rotate the camera position around the player on the ground plane ----
+	const float yaw = rawX * YAW_RAD_PER_COUNT * sens * MOUSE_YAW_SIGN;
+	if (yaw != 0.0f) {
+		const float ox = cameraData->data[0].x - mainActorData.position.x;
+		const float oz = cameraData->data[0].z - mainActorData.position.z;
+		const float c = cosf(yaw);
+		const float s = sinf(yaw);
+		// Same convention as ResetCameraToNearestSide: offset = -(sin t, cos t) * r,
+		// so a positive yaw turns the view to the right.
+		cameraData->data[0].x = mainActorData.position.x + (ox * c + oz * s);
+		cameraData->data[0].z = mainActorData.position.z + (oz * c - ox * s);
+		// NOTE: deliberately no "position.x + 1" nudge like the one-shot snaps above use. Doing that every tick would
+		// make Dante drift. If the game doesn't pick up the new camera position, tune here first.
+	}
+
+	// ---- Pitch: vanilla keeps the vertical angle in cameraData->tilt ----
+	// Higher tilt = camera higher (the "Closer to Ground" preset is the lower value), so moving the mouse up
+	// (negative rawY) lowers the tilt, like a normal "look up" in an orbit camera.
+	const float tiltDelta = rawY * TILT_PER_COUNT * sens * (cfg.mouseCameraInvertY ? -1.0f : 1.0f);
+	if (tiltDelta != 0.0f) {
+		cameraData->tilt = std::clamp(cameraData->tilt + tiltDelta, TILT_MIN, TILT_MAX);
+	}
+
+	return true;
+}
+
 void GeneralCameraOptionsController() {
 	static bool setCamPos = false;
+
+	// This function has many early returns (menus, pause, cutscenes...). Whatever mouse motion piled up
+	// during those must not be replayed as a big camera jump later, so clear it on every exit path.
+	struct MouseMotionDrain {
+		~MouseMotionDrain() {
+			mouse.accumX = 0;
+			mouse.accumY = 0;
+		}
+	} mouseMotionDrain;
 	auto pool_C90E10 = *reinterpret_cast<byte8***>(appBaseAddr + 0xC90E10);
 	if (!pool_C90E10 || !pool_C90E10[5]) {
 		return;
@@ -1473,6 +1558,7 @@ void GeneralCameraOptionsController() {
 	FixInitialCameraRotation(eventData, mainActorData, cameraData, setCamPos);
 	VajuraBugFix(cameraData, eventData);
 	ResetCameraToNearestSide(eventData, mainActorData, cameraData);
+	const bool mouseCameraActive = MouseCameraController(eventData, mainActorData, cameraData, cameraControlMetadata);
 
 	CrimsonPatches::CameraSensController();
 	
@@ -1481,7 +1567,10 @@ void GeneralCameraOptionsController() {
 	if (cameraData != nullptr) {
 		CrimsonPatches::CameraFollowUpSpeedController(*cameraData, cameraControlMetadata);
 		CrimsonPatches::CameraDistanceController(cameraControlMetadata);
-		CrimsonPatches::CameraTiltController(cameraData, cameraControlMetadata);
+		// The tilt preset rewrites cameraData->tilt every tick, which would undo the mouse's vertical movement.
+		if (!(activeCrimsonConfig.Camera.mouseCamera && mouseCameraActive)) {
+			CrimsonPatches::CameraTiltController(cameraData, cameraControlMetadata);
+		}
 	}
 
 	CrimsonPatches::ToggleLockedOffCamera(g_disableCameraRotation ? false : activeCrimsonConfig.Camera.lockedOff);

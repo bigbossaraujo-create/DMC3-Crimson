@@ -257,6 +257,9 @@ struct CrimsonConfig {
 		bool multiplayerCamera = true;
 		bool panoramicCam = true;
 		bool thirdPersonCamera = true;
+		bool mouseCamera = false;
+		float mouseCameraSensitivity = 1.0f;
+		bool mouseCameraInvertY = false;
 
 		static constexpr auto Metadata() {
 			return std::make_tuple(
@@ -274,7 +277,10 @@ struct CrimsonConfig {
                 std::make_pair("disableBossCamera", &Camera::disableBossCamera),
 				std::make_pair("multiplayerCamera", &Camera::multiplayerCamera),
 				std::make_pair("panoramicCam", &Camera::panoramicCam),
-                std::make_pair("thirdPersonCamera", &Camera::thirdPersonCamera)
+                std::make_pair("thirdPersonCamera", &Camera::thirdPersonCamera),
+				std::make_pair("mouseCamera", &Camera::mouseCamera),
+				std::make_pair("mouseCameraSensitivity", &Camera::mouseCameraSensitivity),
+				std::make_pair("mouseCameraInvertY", &Camera::mouseCameraInvertY)
 			);
 		}
 	} Camera;
