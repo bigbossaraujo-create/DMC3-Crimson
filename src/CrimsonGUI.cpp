@@ -3409,10 +3409,17 @@ void CharacterSection(size_t defaultFontSize) {
 			ImGui::Text("");
 
 			if (GUI_Button("BUTTON CONFIGURATION")) {
+				g_showKeyboardConfig = false;
 				g_showControllerRemap = true;
 			}
 			ImGui::SameLine();
 			TooltipHelper("(?)", "Open the controller button remapping window to customize button bindings for each player and character.");
+			if (GUI_Button("KEYBOARD / MOUSE CONFIGURATION")) {
+				g_showControllerRemap = false;
+				g_showKeyboardConfig = true;
+			}
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Customize keyboard and mouse bindings, or apply the DMC5-style mouse preset.");
 
 			ImGui::TableNextColumn();
 
@@ -5403,6 +5410,12 @@ void CameraSection(size_t defaultFontSize) {
 			}
 			ImGui::SameLine();
 			TooltipHelper("(?)", "A dynamic camera mode designed to enhance in-combat readability. Distances itself based on enemies' positioning.");
+
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+			GUI_Checkbox2("Force Third Person Everywhere", activeCrimsonConfig.Camera.forceThirdPersonEverywhere, queuedCrimsonConfig.Camera.forceThirdPersonEverywhere);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Ignores Crimson's room-specific fixed-camera exceptions. Some puzzles, platforming sections, or scripted shots may be harder to read.");
 
 			ImGui::EndTable();
 		}
