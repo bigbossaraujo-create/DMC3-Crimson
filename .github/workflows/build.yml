@@ -1,7 +1,8 @@
 name: Build Crimson (Windows)
 
 # Compiles Crimson.dll in Release on a GitHub Windows runner and attaches it to the run as a downloadable artifact.
-# Run it manually from the Actions tab ("Run workflow"), or it runs on every push to the mouse-camera branch.
+# Runs on every push to the mouse-camera branch. On failure, the relevant error lines are written to the run's
+# Summary page so they can be read without opening the raw logs.
 on:
   workflow_dispatch:
   push:
@@ -14,15 +15,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Environment info
+        shell: pwsh
+        run: |
+          $s = $env:GITHUB_STEP_SUMMARY
+          "## Environment" | Out-File $s -Append -Encoding utf8
+          '```' | Out-File $s -Append -Encoding utf8
+          "cmake: " + (cmake --version | Select-Object -First 1) | Out-File $s -Append -Encoding utf8
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            & $vswhere -all -prerelease -format json | ConvertFrom-Json | ForEach-Object {
+              "VS: $($_.displayName) $($_.installationVersion)" | Out-File $s -Append -Encoding utf8
+            }
+          } else {
+            "vswhere not found" | Out-File $s -Append -Encoding utf8
+          }
+          '```' | Out-File $s -Append -Encoding utf8
+
       - name: Configure (Visual Studio 2022, x64)
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 *> configure.log
+          $code = $LASTEXITCODE
+          Get-Content configure.log -Tail 20
+          exit $code
 
       - name: Build (Release)
-        run: cmake --build build --config Release --parallel
-
-      - name: List build outputs
         shell: pwsh
-        run: Get-ChildItem -Recurse build -Include Crimson.dll,dinput8_injector.dll | Select-Object FullName, Length
+        run: |
+          cmake --build build --config Release --parallel *> build.log
+          $code = $LASTEXITCODE
+          Get-Content build.log -Tail 20
+          exit $code
 
       - name: Upload DLLs
         uses: actions/upload-artifact@v4
@@ -32,3 +56,24 @@ jobs:
             build/bin/Release/Crimson.dll
             build/bin/Release/dinput8_injector.dll
           if-no-files-found: error
+
+      - name: Report errors to the run Summary
+        if: failure()
+        shell: pwsh
+        run: |
+          $s = $env:GITHUB_STEP_SUMMARY
+          foreach ($f in 'configure.log', 'build.log') {
+            if (Test-Path $f) {
+              "## $f - last 60 lines" | Out-File $s -Append -Encoding utf8
+              '```' | Out-File $s -Append -Encoding utf8
+              Get-Content $f -Tail 60 | Out-File $s -Append -Encoding utf8
+              '```' | Out-File $s -Append -Encoding utf8
+              $errs = Select-String -Path $f -Pattern 'error' | Select-Object -First 40 | ForEach-Object { $_.Line }
+              if ($errs) {
+                "## $f - lines mentioning 'error' (first 40)" | Out-File $s -Append -Encoding utf8
+                '```' | Out-File $s -Append -Encoding utf8
+                $errs | Out-File $s -Append -Encoding utf8
+                '```' | Out-File $s -Append -Encoding utf8
+              }
+            }
+          }
