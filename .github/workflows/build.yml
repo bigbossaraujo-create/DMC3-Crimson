@@ -1,0 +1,34 @@
+name: Build Crimson (Windows)
+
+# Compiles Crimson.dll in Release on a GitHub Windows runner and attaches it to the run as a downloadable artifact.
+# Run it manually from the Actions tab ("Run workflow"), or it runs on every push to the mouse-camera branch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [mouse-camera]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (Visual Studio 2022, x64)
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build (Release)
+        run: cmake --build build --config Release --parallel
+
+      - name: List build outputs
+        shell: pwsh
+        run: Get-ChildItem -Recurse build -Include Crimson.dll,dinput8_injector.dll | Select-Object FullName, Length
+
+      - name: Upload DLLs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Crimson-Release
+          path: |
+            build/bin/Release/Crimson.dll
+            build/bin/Release/dinput8_injector.dll
+          if-no-files-found: error
