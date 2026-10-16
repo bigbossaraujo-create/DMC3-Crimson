@@ -780,8 +780,8 @@ void ShowButtonConfigWindow() {
             ImGui::SameLine();
             if (GUI_Button("Apply DMC5 Mouse Preset")) {
                 // Keep movement defaults, but use mouse-first combat controls.
-                activeKeybinds[1]  = DI8::KEY::V;          // Devil Trigger
-                activeKeybinds[8]  = DI8::KEY::Q;          // Lock-on
+                activeKeybinds[1]  = DI8::KEY::Q;          // Devil Trigger
+                activeKeybinds[8]  = 0xF2;                 // Lock-on: middle mouse
                 activeKeybinds[10] = 0xF0;                 // Melee: left mouse
                 activeKeybinds[11] = DI8::KEY::LEFT_SHIFT; // Style action
                 activeKeybinds[12] = DI8::KEY::SPACE;      // Jump
@@ -1058,7 +1058,7 @@ void UpdateKeyboardConfigCapture(byte8* state) {
                 exec[code] = false;
                 preview = code;
                 s_kbCapture.hasConflict = false;
-                s_kbCapture.conflictText[0] = '\\0';
+                s_kbCapture.conflictText[0] = '\0';
             }
         } else {
             exec[code] = true;
