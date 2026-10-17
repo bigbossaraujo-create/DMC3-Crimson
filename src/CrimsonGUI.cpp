@@ -5414,6 +5414,15 @@ void CameraSection(size_t defaultFontSize) {
 			ImGui::SameLine();
 			TooltipHelper("(?)", "Pulls the Third Person Camera closer when it is pushed against a wall, and lets it back out smoothly.");
 
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Camera Scenery Collision", activeCrimsonConfig.Camera.sceneryCollision, queuedCrimsonConfig.Camera.sceneryCollision);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Uses the game's own third person camera collision so the camera can't pass through walls and scenery.\n"
+				"Turn it off if the camera ever gets stuck in a very tight space.");
+
 			ImGui::EndTable();
 		}
 

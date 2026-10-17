@@ -1183,28 +1183,33 @@ void DisableCameraShake(bool enable) {
 }
 
 void ForceThirdPersonCamera(bool enable) {
+	// "skipCollision" tracks the one patch this function applies (the TPS camera collision skip).
 	static bool run = false;
-
-	// If the function has already run in the current state, return early
-	if (run == enable) {
-		return;
-	}
 
 	// dmc3.exe + 558AC - 75 12 - jne dmc3.exe+558C0 { Force Fixed Cameras to go to Third Person Camera instead }
 	// dmc3.exe + 5EBC6 - 7F 14 - jg dmc3.exe + 5EBDC { TPSCamera Collision to keep it going to tight spaces } -- from call dmc3.exe+5EBC0 at dmc3.exe+56832
+	//
+	// The 5EBC6 patch makes the third person camera ignore the game's scenery collision (original author's choice, so the camera
+	// never gets stuck in tight spaces). With "Camera Scenery Collision" on, we leave the original instruction alone so the camera
+	// collides with the scenery.
+	const bool skipCollision = enable && !activeCrimsonConfig.Camera.sceneryCollision;
 
+	// If the patch is already in the requested state, return early
+	if (run == skipCollision) {
+		return;
+	}
 
-	if (enable) {
+	if (skipCollision) {
 		//_nop((char*)(appBaseAddr + 0x558AC), 2);
-        _patch((char*)(appBaseAddr + 0x5EBC6), (char*)"\xEB\x14", 2); // jmp dmc3.exe + 5EBDC
+		_patch((char*)(appBaseAddr + 0x5EBC6), (char*)"\xEB\x14", 2); // jmp dmc3.exe + 5EBDC
 	}
 	else {
-		// Restore the original instruction at dmc3.exe + 27E86A
+		// Restore the original instruction at dmc3.exe + 5EBC6
 		//_patch((char*)(appBaseAddr + 0x558AC), (char*)"\x75\x12", 2);
-        _patch((char*)(appBaseAddr + 0x5EBC6), (char*)"\x7F\x14", 2);
+		_patch((char*)(appBaseAddr + 0x5EBC6), (char*)"\x7F\x14", 2);
 	}
 
-	run = enable;
+	run = skipCollision;
 }
 
 void ToggleLockedOffCamera(bool enable) {

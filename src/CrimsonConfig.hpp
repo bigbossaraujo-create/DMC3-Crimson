@@ -266,6 +266,7 @@ struct CrimsonConfig {
 		float mouseCameraTiltMax = 0.6f;   // highest camera height (looking down)
 		float mouseCameraSmoothing = 0.0f; // 0 = raw/no smoothing, up to 0.9 = very smooth (adds input lag)
 		bool wallZoomEnable = true;        // pull the camera in when it is close to a wall
+		bool sceneryCollision = true;      // let the game's own third person camera collision run (camera can't clip through scenery)
 
 		static constexpr auto Metadata() {
 			return std::make_tuple(
@@ -292,7 +293,8 @@ struct CrimsonConfig {
 				std::make_pair("mouseCameraTiltMin", &Camera::mouseCameraTiltMin),
 				std::make_pair("mouseCameraTiltMax", &Camera::mouseCameraTiltMax),
 				std::make_pair("mouseCameraSmoothing", &Camera::mouseCameraSmoothing),
-				std::make_pair("wallZoomEnable", &Camera::wallZoomEnable)
+				std::make_pair("wallZoomEnable", &Camera::wallZoomEnable),
+				std::make_pair("sceneryCollision", &Camera::sceneryCollision)
 			);
 		}
 	} Camera;
