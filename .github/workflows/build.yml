@@ -8,6 +8,9 @@ on:
   push:
     branches: [mouse-camera]
 
+permissions:
+  contents: write   # needed to publish the GitHub Release below
+
 jobs:
   build:
     # The project targets Visual Studio 2022; windows-latest no longer ships it.
@@ -57,6 +60,25 @@ jobs:
             build/bin/Release/Crimson.dll
             build/bin/Release/dinput8_injector.dll
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        # Only for successful pushes to mouse-camera. Gives a permanent download link (no login needed),
+        # tagged build-<run number> so the latest release is always the newest build.
+        if: success() && github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          $tag = "build-${{ github.run_number }}"
+          $notes = "Commit ${{ github.sha }}`n`n$env:COMMIT_MSG"
+          gh release create $tag `
+            build/bin/Release/Crimson.dll `
+            build/bin/Release/dinput8_injector.dll `
+            --target ${{ github.sha }} `
+            --title "Crimson build #${{ github.run_number }}" `
+            --notes $notes `
+            --latest
 
       - name: Report errors to the run Summary
         if: failure()

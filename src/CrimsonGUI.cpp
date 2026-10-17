@@ -5377,6 +5377,43 @@ void CameraSection(size_t defaultFontSize) {
 				defaultCrimsonConfig.Camera.mouseCameraSensitivityY, 0.1f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
 			ImGui::PopItemWidth();
 
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			ImGui::PushItemWidth(itemWidth * 0.7f);
+			GUI_InputDefault2("Mouse Look Down Limit", activeCrimsonConfig.Camera.mouseCameraTiltMax, queuedCrimsonConfig.Camera.mouseCameraTiltMax,
+				defaultCrimsonConfig.Camera.mouseCameraTiltMax, 0.05f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Highest the mouse can raise the camera (default 0.6). Vanilla presets are 0.25 and 0.10.");
+
+			ImGui::TableNextColumn();
+
+			ImGui::PushItemWidth(itemWidth * 0.7f);
+			GUI_InputDefault2("Mouse Look Up Limit", activeCrimsonConfig.Camera.mouseCameraTiltMin, queuedCrimsonConfig.Camera.mouseCameraTiltMin,
+				defaultCrimsonConfig.Camera.mouseCameraTiltMin, 0.05f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Lowest the mouse can bring the camera (default 0). Negative values look up from below, which may clip the floor.");
+
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			ImGui::PushItemWidth(itemWidth * 0.7f);
+			GUI_InputDefault2("Mouse Smoothing", activeCrimsonConfig.Camera.mouseCameraSmoothing, queuedCrimsonConfig.Camera.mouseCameraSmoothing,
+				defaultCrimsonConfig.Camera.mouseCameraSmoothing, 0.05f, "%g", ImGuiInputTextFlags_EnterReturnsTrue);
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			TooltipHelper("(?)", "0 = raw mouse input with no lag. Up to 0.9 = smoother but with more delay.");
+
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Camera Wall Zoom", activeCrimsonConfig.Camera.wallZoomEnable, queuedCrimsonConfig.Camera.wallZoomEnable);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Pulls the Third Person Camera closer when it is pushed against a wall, and lets it back out smoothly.");
+
 			ImGui::EndTable();
 		}
 

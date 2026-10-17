@@ -1458,23 +1458,45 @@ static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& ma
 
 	// Always consume the accumulated motion, even when inactive, so movement made while the
 	// menu is open (or the option is off) isn't applied later as one big jump.
-	const float rawX = static_cast<float>(mouse.accumX);
-	const float rawY = static_cast<float>(mouse.accumY);
+	float rawX = static_cast<float>(mouse.accumX);
+	float rawY = static_cast<float>(mouse.accumY);
 	mouse.accumX = 0;
 	mouse.accumY = 0;
 
+	// Smoothing state. Cleared whenever the mouse camera is inactive so leftover motion never leaks out later.
+	static float smoothX = 0.0f;
+	static float smoothY = 0.0f;
+	auto resetSmoothing = []() { smoothX = 0.0f; smoothY = 0.0f; };
+
 	if (!cfg.mouseCamera || !cameraData) {
+		resetSmoothing();
 		return false;
 	}
 	if (eventData.event != EVENT::MAIN || g_inGameCutscene || g_show) {
+		resetSmoothing();
 		return false;
 	}
 	if (GetForegroundWindow() != appWindow) {
+		resetSmoothing();
 		return false;
 	}
 	// A fixed camera is currently active, or the camera is transitioning to / on the lock-on cam.
 	if (cameraControlMetadata.fixedCameraAddr != 0 || cameraData->transitionToLockOnCam != 0) {
+		resetSmoothing();
 		return false;
+	}
+
+	// Optional smoothing (exponential moving average of the mouse motion). 0 = raw input, no added lag.
+	const float smoothing = std::clamp(cfg.mouseCameraSmoothing, 0.0f, 0.9f);
+	if (smoothing > 0.0f) {
+		const float alpha = 1.0f - smoothing;
+		smoothX += (rawX - smoothX) * alpha;
+		smoothY += (rawY - smoothY) * alpha;
+		// Let the tail die out instead of drifting forever.
+		if (fabsf(smoothX) < 0.01f && rawX == 0.0f) smoothX = 0.0f;
+		if (fabsf(smoothY) < 0.01f && rawY == 0.0f) smoothY = 0.0f;
+		rawX = smoothX;
+		rawY = smoothY;
 	}
 
 	// Keep the OS cursor parked in the middle of the window so it can't leave the game window
@@ -1491,8 +1513,10 @@ static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& ma
 	constexpr float MOUSE_YAW_SIGN = -1.0f;
 	constexpr float YAW_RAD_PER_COUNT = 0.01f;
 	constexpr float TILT_PER_COUNT = 0.004f;
-	constexpr float TILT_MIN = 0.0f;
-	constexpr float TILT_MAX = 0.6f;
+	// Configurable pitch range, clamped to a sane window. Vanilla presets are 0.103 and 0.253.
+	const float TILT_MIN = std::clamp(cfg.mouseCameraTiltMin, -0.3f, 1.0f);
+	const float tiltMaxRaw = std::clamp(cfg.mouseCameraTiltMax, -0.3f, 1.0f);
+	const float TILT_MAX = (tiltMaxRaw > TILT_MIN + 0.05f) ? tiltMaxRaw : (TILT_MIN + 0.05f);
 
 	const float sens = (cfg.mouseCameraSensitivity > 0.0f) ? cfg.mouseCameraSensitivity : 0.0f;
 	const float sensY = (cfg.mouseCameraSensitivityY > 0.0f) ? cfg.mouseCameraSensitivityY : 0.0f;

@@ -954,6 +954,41 @@ void HandleMultiplayerCameraDistance(float& cameraDistance, float groundDistance
 	}
 }
 
+/// <summary>
+/// Wall zoom for the fixed distance presets (Far / Closer) in single player.
+/// The Dynamic / Panoramic / Multiplayer modes already react to wall collisions on their own; the two fixed presets
+/// used to just clamp the distance. Mirrors that behaviour: pull the camera in while it is colliding, then let it
+/// back out smoothly toward the preset distance once the wall has been clear for a short cooldown.
+/// </summary>
+static void ApplyWallZoom(CameraData& cameraData, float presetDistance) {
+	static auto lastWallHitTime = std::chrono::steady_clock::now();
+	constexpr float MIN_DISTANCE = 100.0f; // never pull the camera inside the player
+	const auto cooldown = std::chrono::milliseconds(800);
+
+	if (!activeCrimsonConfig.Camera.wallZoomEnable) {
+		return;
+	}
+
+	// g_cameraHittingWall is declared as a bool but the detour writes a raw byte into it (it can be > 1),
+	// so read the byte directly instead of letting the compiler assume 0/1.
+	const uint8 wallState = *reinterpret_cast<const volatile uint8*>(&g_cameraHittingWall);
+	const auto now = std::chrono::steady_clock::now();
+
+	if (wallState > 1) {
+		cameraData.distanceCam -= 40.0f * g_frameRateMultiplier;
+		if (cameraData.distanceCam < MIN_DISTANCE) {
+			cameraData.distanceCam = MIN_DISTANCE;
+		}
+		lastWallHitTime = now;
+	} else if (cameraData.distanceCam < presetDistance && (now - lastWallHitTime) > cooldown) {
+		const float deltaTime = ImGui::GetIO().DeltaTime;
+		cameraData.distanceCam += (presetDistance - cameraData.distanceCam) * (1.0f - std::exp(-3.0f * deltaTime));
+		if (presetDistance - cameraData.distanceCam < 0.5f) {
+			cameraData.distanceCam = presetDistance;
+		}
+	}
+}
+
 void CameraDistanceController(CameraControlMetadata& cameraMetadata) {
 	auto pool_4449 = *reinterpret_cast<byte8***>(appBaseAddr + 0xC8FBD0);
 	if (!pool_4449 || !pool_4449[147]) {
@@ -991,6 +1026,7 @@ void CameraDistanceController(CameraControlMetadata& cameraMetadata) {
 			if (cameraData.distanceCam > 800.0f) {
 				cameraData.distanceCam = 430.0f;
 			}
+			ApplyWallZoom(cameraData, 430.0f);
 			return;
 		}
 	}
@@ -1003,6 +1039,7 @@ void CameraDistanceController(CameraControlMetadata& cameraMetadata) {
 			if (cameraData.distanceCam > 350.0f) {
 				cameraData.distanceCam = 350.0f;
 			}
+			ApplyWallZoom(cameraData, 350.0f);
 			return;
 		}
 	}

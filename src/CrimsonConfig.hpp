@@ -262,6 +262,10 @@ struct CrimsonConfig {
 		float mouseCameraSensitivity = 1.0f;
 		float mouseCameraSensitivityY = 1.0f;
 		bool mouseCameraInvertY = false;
+		float mouseCameraTiltMin = 0.0f;   // lowest camera height (looking up from below the player)
+		float mouseCameraTiltMax = 0.6f;   // highest camera height (looking down)
+		float mouseCameraSmoothing = 0.0f; // 0 = raw/no smoothing, up to 0.9 = very smooth (adds input lag)
+		bool wallZoomEnable = true;        // pull the camera in when it is close to a wall
 
 		static constexpr auto Metadata() {
 			return std::make_tuple(
@@ -284,7 +288,11 @@ struct CrimsonConfig {
 				std::make_pair("mouseCamera", &Camera::mouseCamera),
 				std::make_pair("mouseCameraSensitivity", &Camera::mouseCameraSensitivity),
 				std::make_pair("mouseCameraSensitivityY", &Camera::mouseCameraSensitivityY),
-				std::make_pair("mouseCameraInvertY", &Camera::mouseCameraInvertY)
+				std::make_pair("mouseCameraInvertY", &Camera::mouseCameraInvertY),
+				std::make_pair("mouseCameraTiltMin", &Camera::mouseCameraTiltMin),
+				std::make_pair("mouseCameraTiltMax", &Camera::mouseCameraTiltMax),
+				std::make_pair("mouseCameraSmoothing", &Camera::mouseCameraSmoothing),
+				std::make_pair("wallZoomEnable", &Camera::wallZoomEnable)
 			);
 		}
 	} Camera;
