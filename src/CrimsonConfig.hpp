@@ -257,7 +257,7 @@ struct CrimsonConfig {
 		bool multiplayerCamera = true;
 		bool panoramicCam = true;
 		bool thirdPersonCamera = true;
-		bool forceThirdPersonEverywhere = false;
+		bool forceThirdPersonEverywhere = true;
 		bool mouseCamera = false;
 		float mouseCameraSensitivity = 1.0f;
 		float mouseCameraSensitivityY = 1.0f;

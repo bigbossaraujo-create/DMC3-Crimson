@@ -1271,7 +1271,12 @@ void ForceThirdPersonCameraController() {
 		}
 	}
 
-	if (activeCrimsonConfig.Camera.thirdPersonCamera) {
+	if (activeCrimsonConfig.Camera.thirdPersonCamera && activeCrimsonConfig.Camera.forceThirdPersonEverywhere) {
+		// "Force Third Person Everywhere": no room or boss exceptions at all. The boss/arena fixed cameras
+		// are disabled in every room, in single player and multiplayer, so the free camera never gets locked.
+		Camera::ToggleDisableBossCamera(true);
+		CrimsonPatches::ForceThirdPersonCamera(true);
+	} else if (activeCrimsonConfig.Camera.thirdPersonCamera) {
 		// Disable Boss Camera Exceptions
 
 		if (activeConfig.Actor.playerCount <= 1) { // IN SINGLE PLAYER
