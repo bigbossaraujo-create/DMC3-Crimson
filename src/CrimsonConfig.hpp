@@ -267,6 +267,9 @@ struct CrimsonConfig {
 		float mouseCameraSmoothing = 0.0f; // 0 = raw/no smoothing, up to 0.9 = very smooth (adds input lag)
 		bool wallZoomEnable = true;        // pull the camera in when it is close to a wall
 		bool sceneryCollision = true;      // let the game's own third person camera collision run (camera can't clip through scenery)
+		bool mouseCameraDuringLockOn = false; // experimental: let the mouse keep adjusting the camera while locked on
+		bool cameraRecenterBehind = true;  // camera reset button snaps the camera behind the character (when centering is Off)
+		bool showCameraDebug = false;      // show camera debug info in the Camera menu
 
 		static constexpr auto Metadata() {
 			return std::make_tuple(
@@ -294,7 +297,10 @@ struct CrimsonConfig {
 				std::make_pair("mouseCameraTiltMax", &Camera::mouseCameraTiltMax),
 				std::make_pair("mouseCameraSmoothing", &Camera::mouseCameraSmoothing),
 				std::make_pair("wallZoomEnable", &Camera::wallZoomEnable),
-				std::make_pair("sceneryCollision", &Camera::sceneryCollision)
+				std::make_pair("sceneryCollision", &Camera::sceneryCollision),
+				std::make_pair("mouseCameraDuringLockOn", &Camera::mouseCameraDuringLockOn),
+				std::make_pair("cameraRecenterBehind", &Camera::cameraRecenterBehind),
+				std::make_pair("showCameraDebug", &Camera::showCameraDebug)
 			);
 		}
 	} Camera;

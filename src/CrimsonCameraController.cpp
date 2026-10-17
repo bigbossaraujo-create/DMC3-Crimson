@@ -542,3 +542,28 @@ void CameraSwitchInitDetour() {
 	bool res = cameraSwitchAccessHook->Toggle();
 	assert(res);
 }
+
+
+void CrimsonCameraController::DrawCameraDebugInfo() {
+	auto pool_events = *reinterpret_cast<byte8***>(appBaseAddr + 0xC90E10);
+	if (pool_events && pool_events[8]) {
+		auto& eventData = *reinterpret_cast<EventData*>(pool_events[8]);
+		ImGui::Text("Room %u  Position %u", (unsigned)eventData.room, (unsigned)eventData.position);
+	}
+	auto& sessionData = *reinterpret_cast<SessionData*>(appBaseAddr + 0xC8F250);
+	ImGui::Text("Mission %u", (unsigned)sessionData.mission);
+	ImGui::Text("Camera index %u  type %u", (unsigned)g_currentCameraIndex, (unsigned)g_currentCameraType);
+	ImGui::Text("Room exception active: %s", s_tpsException ? "yes" : "no");
+	ImGui::Text("Internal TPS camera: %s", s_cameraEnable ? "on" : "off (fixed cam)");
+
+	auto pool_camera = *reinterpret_cast<byte8***>(appBaseAddr + 0xC8FBD0);
+	if (pool_camera) {
+		auto& cameraControlMetadata = *reinterpret_cast<CameraControlMetadata*>(pool_camera);
+		ImGui::Text("Fixed camera active: %s", cameraControlMetadata.fixedCameraAddr != 0 ? "yes" : "no");
+	}
+	if (CameraData* cameraData = GetSafeCameraData()) {
+		ImGui::Text("Tilt %g  Distance %g", cameraData->tilt, cameraData->distanceCam);
+		ImGui::Text("Lock-on transition: %u", (unsigned)cameraData->transitionToLockOnCam);
+	}
+	ImGui::Text("cameraHittingWall: %u", (unsigned)g_cameraHittingWall);
+}

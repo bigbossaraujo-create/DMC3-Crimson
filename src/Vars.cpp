@@ -877,6 +877,6 @@ float g_rotationBeforeCalculation = 0;
 float g_rotationCalculated = 0;
 __declspec(align(16)) float g_customCameraPos[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 __declspec(align(16)) float g_customCameraSensitivity = 0.0f;
-bool g_cameraHittingWall = true;
+uint8 g_cameraHittingWall = 1; // raw byte written by the camera collision detour (can be > 1)
 
 #pragma endregion

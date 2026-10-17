@@ -77,6 +77,11 @@
 #include "UI\Texture2DD3D11.hpp"
 #include "UI\EmbeddedImages.hpp"
 #include "CrimsonCameraController.hpp"
+
+// Set by CMake (-DCRIMSON_BUILD_LABEL=...) so the menu can show which build is running.
+#ifndef CRIMSON_BUILD_LABEL
+#define CRIMSON_BUILD_LABEL "dev"
+#endif
 #include "CrimsonBetterArkham2.hpp"
 
 #include "DebugDrawDX11.hpp"
@@ -5423,7 +5428,32 @@ void CameraSection(size_t defaultFontSize) {
 			TooltipHelper("(?)", "Uses the game's own third person camera collision so the camera can't pass through walls and scenery.\n"
 				"Turn it off if the camera ever gets stuck in a very tight space.");
 
+			ImGui::TableNextRow(0, rowWidth);
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Mouse Camera During Lock-On", activeCrimsonConfig.Camera.mouseCameraDuringLockOn, queuedCrimsonConfig.Camera.mouseCameraDuringLockOn);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "Experimental. Lets the mouse keep adjusting the camera while you are locked on to an enemy.");
+
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Recenter Camera Behind Player", activeCrimsonConfig.Camera.cameraRecenterBehind, queuedCrimsonConfig.Camera.cameraRecenterBehind);
+			ImGui::SameLine();
+			TooltipHelper("(?)", "The camera reset button snaps the camera behind the character.\n"
+				"Only used when Right Stick Camera Centering is Off. 'On' already centers the camera and 'To Nearest Side' has its own snap.");
+
+			ImGui::TableNextColumn();
+
+			GUI_Checkbox2("Show Camera Debug", activeCrimsonConfig.Camera.showCameraDebug, queuedCrimsonConfig.Camera.showCameraDebug);
+
 			ImGui::EndTable();
+
+			if (activeCrimsonConfig.Camera.showCameraDebug) {
+				ImGui::Text("");
+				CrimsonCameraController::DrawCameraDebugInfo();
+			}
+			ImGui::Text("");
+			ImGui::TextDisabled("Crimson mod build: %s", CRIMSON_BUILD_LABEL);
 		}
 
 		ImGui::Text("");

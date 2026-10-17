@@ -22,6 +22,10 @@ include_directories(${CMAKE_SOURCE_DIR}/ThirdParty/Effekseer/src/Effekseer)
 include_directories(${CMAKE_SOURCE_DIR}/ThirdParty/Effekseer/src/EffekseerRendererDX11)
 include_directories(${CMAKE_SOURCE_DIR}/src/Utility)
 
+# Build label shown in the mod menu (the GitHub workflow passes build-<run number>-<short sha>).
+set(CRIMSON_BUILD_LABEL "dev" CACHE STRING "Build label shown in the Crimson menu")
+add_compile_definitions(CRIMSON_BUILD_LABEL="${CRIMSON_BUILD_LABEL}")
+
 add_compile_options(/W0)
 add_compile_options("$<$<CONFIG:Release>:/MT>")
 add_compile_options("$<$<CONFIG:Debug>:/MTd>")

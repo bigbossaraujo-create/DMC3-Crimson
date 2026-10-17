@@ -39,7 +39,8 @@ jobs:
       - name: Configure (Visual Studio 2022, x64)
         shell: pwsh
         run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 *> configure.log
+          $label = "build-${{ github.run_number }}-" + "${{ github.sha }}".Substring(0, 7)
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 "-DCRIMSON_BUILD_LABEL=$label" *> configure.log
           $code = $LASTEXITCODE
           Get-Content configure.log -Tail 20
           exit $code

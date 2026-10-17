@@ -1447,6 +1447,53 @@ void ResetCameraToNearestSide(EventData& eventData, PlayerActorData& mainActorDa
 }
 
 /// <summary>
+/// Snaps the third person camera back behind the character when the game's camera reset button is pressed.
+/// Only used when "Right Stick Camera Centering" is Off: On already centers the camera (vanilla), and
+/// To Nearest Side has its own snap (ResetCameraToNearestSide).
+/// </summary>
+void RecenterCameraBehindPlayer(EventData& eventData, PlayerActorData& mainActorData, CameraData* cameraData, CameraControlMetadata& cameraControlMetadata) {
+	static bool buttonHeld = false;
+
+	if (!cameraData || !activeCrimsonConfig.Camera.thirdPersonCamera || !activeCrimsonConfig.Camera.cameraRecenterBehind ||
+		activeCrimsonConfig.Camera.rightStickCameraCentering != RIGHTSTICKCENTERCAM::OFF) {
+		buttonHeld = false;
+		return;
+	}
+
+	const bool pressed = (mainActorData.buttons[0] & GetBinding(BINDING::DEFAULT_CAMERA)) != 0;
+	if (!pressed) {
+		buttonHeld = false;
+		return;
+	}
+	if (buttonHeld || g_inGameCutscene || g_show || cameraControlMetadata.fixedCameraAddr != 0) {
+		return;
+	}
+	buttonHeld = true;
+
+	constexpr float TWO_PI = 6.283185307f;
+	constexpr float PI = 3.1415926535f;
+	constexpr float MIN_RADIUS = 150.0f;
+
+	// Keep the current distance from the character, only change the side the camera is on.
+	const float dx = cameraData->data[0].x - mainActorData.position.x;
+	const float dz = cameraData->data[0].z - mainActorData.position.z;
+	float radius = sqrtf(dx * dx + dz * dz);
+	if (radius < MIN_RADIUS) {
+		radius = MIN_RADIUS;
+	}
+
+	// Same convention as FixInitialCameraRotation: offset = -(sin a, cos a) * r puts the camera behind the character.
+	float angle = (mainActorData.rotation / 65535.0f) * TWO_PI;
+	if (eventData.room == ROOM::HEAVENRISE_CHAMBER || eventData.room == ROOM::HIGH_FLY_ZONE || eventData.room == ROOM::SUN_MOON_CHAMBER) {
+		angle += PI; // these rooms are flipped
+	}
+
+	cameraData->data[0].x = mainActorData.position.x - sinf(angle) * radius;
+	cameraData->data[0].z = mainActorData.position.z - cosf(angle) * radius;
+	mainActorData.position.x = mainActorData.position.x + 1; // Triggers camera orbit (same nudge as the other one-shot snaps)
+}
+
+/// <summary>
 /// Mouse Camera: orbits the third person camera around the player using the raw relative mouse
 /// movement from the DirectInput mouse (mouse.accumX / mouse.accumY). It is NOT converted into a
 /// fake right stick, so there is no deadzone, curve or stick-speed cap. It runs on top of the
@@ -1481,7 +1528,9 @@ static bool MouseCameraController(CSceneGameMain& eventData, PlayerActorData& ma
 		return false;
 	}
 	// A fixed camera is currently active, or the camera is transitioning to / on the lock-on cam.
-	if (cameraControlMetadata.fixedCameraAddr != 0 || cameraData->transitionToLockOnCam != 0) {
+	// (Optionally the mouse keeps working on the lock-on cam: experimental, see "Mouse Camera During Lock-On".)
+	if (cameraControlMetadata.fixedCameraAddr != 0 ||
+		(cameraData->transitionToLockOnCam != 0 && !cfg.mouseCameraDuringLockOn)) {
 		resetSmoothing();
 		return false;
 	}
@@ -1588,6 +1637,12 @@ void GeneralCameraOptionsController() {
 	FixInitialCameraRotation(eventData, mainActorData, cameraData, setCamPos);
 	VajuraBugFix(cameraData, eventData);
 	ResetCameraToNearestSide(eventData, mainActorData, cameraData);
+	{
+		auto pool_12959 = *reinterpret_cast<byte8***>(appBaseAddr + 0xC90E10);
+		if (pool_12959 && pool_12959[8]) {
+			RecenterCameraBehindPlayer(*reinterpret_cast<EventData*>(pool_12959[8]), mainActorData, cameraData, cameraControlMetadata);
+		}
+	}
 	const bool mouseCameraActive = MouseCameraController(eventData, mainActorData, cameraData, cameraControlMetadata);
 
 	CrimsonPatches::CameraSensController();

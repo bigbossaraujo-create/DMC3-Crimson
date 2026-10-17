@@ -6059,7 +6059,7 @@ extern bool g_isParanoramicCamActive;
 
 extern __declspec(align(16)) float g_customCameraPos[4];
 extern __declspec(align(16)) float g_customCameraSensitivity;
-extern bool g_cameraHittingWall;
+extern uint8 g_cameraHittingWall; // raw byte written by the camera collision detour (can be > 1)
 
 constexpr BossHelper bossHelpers[] = {
     {6, 2, "afs/sound/Boss_01.adx"},      // Cerberus

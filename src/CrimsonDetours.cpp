@@ -209,7 +209,7 @@ void CameraSensitivityDetour2();
 // CamHittingWall
 std::uint64_t g_CamHittingWall_ReturnAddr;
 void CamHittingWallDetour();
-bool* g_CamHittingWall_ConditionalAddr = nullptr;
+uint8* g_CamHittingWall_ConditionalAddr = nullptr;
 
 // ConfirmSetAction
 std::uint64_t g_ConfirmSetAction_ReturnAddr;

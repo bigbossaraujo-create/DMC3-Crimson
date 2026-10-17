@@ -969,8 +969,7 @@ static void ApplyWallZoom(CameraData& cameraData, float presetDistance) {
 		return;
 	}
 
-	// g_cameraHittingWall is declared as a bool but the detour writes a raw byte into it (it can be > 1),
-	// so read the byte directly instead of letting the compiler assume 0/1.
+	// Raw byte written by the camera collision detour (can be > 1).
 	const uint8 wallState = *reinterpret_cast<const volatile uint8*>(&g_cameraHittingWall);
 	const auto now = std::chrono::steady_clock::now();
 
